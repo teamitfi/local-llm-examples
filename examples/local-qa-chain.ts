@@ -5,21 +5,22 @@ import { HNSWLib } from "@langchain/community/vectorstores/hnswlib";
 import { Ollama } from "@langchain/ollama";
 import { OllamaEmbeddings } from "@langchain/ollama";
 import { PromptTemplate } from "@langchain/core/prompts";
+import { splitDocs } from "../utils/directory-loader";
 
-const loader = new CheerioWebBaseLoader(
-  "https://lilianweng.github.io/posts/2023-06-23-agent/"
-);
-const docs = await loader.load();
+// const loader = new CheerioWebBaseLoader(
+//   "https://lilianweng.github.io/posts/2023-06-23-agent/"
+// );
+// const docs = await loader.load();
 
-const splitter = new RecursiveCharacterTextSplitter({
-  chunkOverlap: 0,
-  chunkSize: 500,
-});
+// const splitter = new RecursiveCharacterTextSplitter({
+//   chunkOverlap: 0,
+//   chunkSize: 500,
+// });
 
-const splitDocuments = await splitter.splitDocuments(docs);
+// const splitDocuments = await splitter.splitDocuments(docs);
 
 const vectorstore = await HNSWLib.fromDocuments(
-  splitDocuments,
+  splitDocs,
   new OllamaEmbeddings()
 );
 

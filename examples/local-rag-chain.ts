@@ -1,5 +1,3 @@
-import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
-import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { formatDocumentsAsString } from "langchain/util/document";
 import { PromptTemplate } from "@langchain/core/prompts";
 import {
@@ -14,33 +12,19 @@ import { ChatOllama } from "@langchain/ollama";
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { pull } from "langchain/hub";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-
-const loader = new CheerioWebBaseLoader(
-  "https://lilianweng.github.io/posts/2023-06-23-agent/"
-);
-const docs = await loader.load();
-
-const textSplitter = new RecursiveCharacterTextSplitter({
-  chunkSize: 500,
-  chunkOverlap: 0,
-});
-const allSplits = await textSplitter.splitDocuments(docs);
-console.log("allSplits", allSplits.length);
+import { splitDocs as docs } from "../utils/directory-loader";
 
 const embeddings = new OllamaEmbeddings();
-const vectorStore = await MemoryVectorStore.fromDocuments(
-  allSplits,
-  embeddings
-);
+const vectorStore = await MemoryVectorStore.fromDocuments(docs, embeddings);
 
 const ollamaLlm = new ChatOllama({
   baseUrl: "http://localhost:11434", // Default value
-  model: "llama2", // Default value
+  model: "llama3", // Default value
 });
 
 async function createcChain() {
   const prompt = PromptTemplate.fromTemplate(
-    "Summarize the main themes in these retrieved docs: {context}"
+    "CV Details, like name, presentation,project experience, skills: {context}"
   );
 
   const chain = await createStuffDocumentsChain({
@@ -51,8 +35,9 @@ async function createcChain() {
   return chain;
 }
 
-async function askQARetreival() {
-  const question = "What are the approaches to Task Decomposition?";
+async function askQARetreival(
+  question = "Are there any develpers in the CV´s having experience in Java and Typescript?"
+) {
   const retriever = vectorStore.asRetriever();
   const ragPrompt = await pull<ChatPromptTemplate>("rlm/rag-prompt");
   const qaChain = RunnableSequence.from([
@@ -65,7 +50,7 @@ async function askQARetreival() {
     },
     ragPrompt,
     ollamaLlm,
-    new StringOutputParser(),
+    // new StringOutputParser(),
   ]);
 
   const response = await qaChain.invoke({ question });
@@ -90,7 +75,9 @@ async function askQA(question: string) {
 }
 
 async function askChain() {
-  const question = "What are the approaches to Task Decomposition?";
+  // const question =
+  //   "Is there any pdf file containing the name Tim Susa? Summarize the content. Does he has experience in Java and Typescript?";
+  const question = "List all CV´s with names, skill and experience.";
   const docs = await vectorStore.similaritySearch(question);
   const chain = await createcChain();
   const response = await chain.invoke({
@@ -100,13 +87,15 @@ async function askChain() {
 }
 
 async function ask(
-  question = "What are the approaches to Task Decomposition?"
+  question = "Is there any pdf file containing the name Tim Susa? Summarize the content. Does he has experience in Java and Typescript?"
 ) {
   const docs = await vectorStore.similaritySearch(question);
-  console.log(docs.length);
+  console.log(docs);
 }
 
 //ask();
 //askChain();
-//askQA("What are the approaches to Task Decomposition in german? ");
-askQARetreival();
+// askQA(
+//   "Are there any developers having skills in Java and Typescript? List their names and summarize their experience."
+// );
+askQARetreival("List all CV´s with names, skill and experience.");

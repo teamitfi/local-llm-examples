@@ -3,7 +3,7 @@ import path from "path";
 import { getLlama, LlamaEmbedding, resolveModelFile } from "node-llama-cpp";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const modelsDirectory = path.join(__dirname, "models");
+const modelsDirectory = path.join(__dirname, "../models");
 
 const modelPath = await resolveModelFile(
   "hf:mradermacher/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct.Q4_K_M.gguf",
@@ -61,7 +61,7 @@ const documentEmbeddings = await embedDocuments([
   "Cleaning the house is a good way to keep it tidy",
 ]);
 
-const query = "What is the tallest mountain on Earth?";
+const query = "Show all developers having skills in typescript.";
 const queryEmbedding = await context.getEmbeddingFor(query);
 
 const similarDocuments = findSimilarDocuments(
